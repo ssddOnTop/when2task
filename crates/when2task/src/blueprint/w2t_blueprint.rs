@@ -8,7 +8,6 @@ pub struct Step {
 }
 pub struct Blueprint {
     pub steps: Vec<Step>,
-    pub task_to_step: HashMap<TaskId, usize>,
 }
 
 impl Blueprint {
@@ -48,9 +47,7 @@ impl Blueprint {
         }
 
         let mut steps = vec![];
-        let mut task_to_step = HashMap::new();
         let mut processed = HashSet::new();
-        let mut step_index = 0;
 
         // Process tasks level by level
         loop {
@@ -72,7 +69,6 @@ impl Blueprint {
 
             // Record step mapping
             for task_id in &ready_tasks {
-                task_to_step.insert(*task_id, step_index);
                 processed.insert(*task_id);
             }
 
@@ -88,8 +84,6 @@ impl Blueprint {
                     }
                 }
             }
-
-            step_index += 1;
         }
 
         // Check for circular dependencies
@@ -102,10 +96,7 @@ impl Blueprint {
             return Err(BlueprintError::CircularDependency(remaining));
         }
 
-        Ok(Blueprint {
-            steps,
-            task_to_step,
-        })
+        Ok(Blueprint { steps })
     }
 
     pub fn step_count(&self) -> usize {
