@@ -3,7 +3,7 @@ use derive_getters::Getters;
 use std::future::Future;
 use std::pin::Pin;
 
-pub type UnitTask<'a, T, E> = Pin<Box<dyn Future<Output = Result<T, E>> + 'a>>;
+pub type UnitTask<'a, T, E> = Pin<Box<dyn Future<Output = Result<T, E>> + Send + 'a>>;
 
 #[derive(Getters)]
 pub struct Task<'a, T, E> {
@@ -14,7 +14,7 @@ pub struct Task<'a, T, E> {
 }
 
 impl<'a, T, E> Task<'a, T, E> {
-    pub fn new<F: Future<Output = Result<T, E>> + 'a>(
+    pub fn new<F: Future<Output = Result<T, E>> + Send + 'a>(
         task: F,
         dependencies: impl Into<Dependency>,
     ) -> Self {
@@ -28,7 +28,10 @@ impl<'a, T, E> Task<'a, T, E> {
     }
 
     /// Convenience method to create a task with no dependencies
-    pub fn new_independent<F: Future<Output = Result<T, E>> + 'a>(task: F) -> Self {
+    pub fn new_independent<F: Future<Output = Result<T, E>> + Send + 'a>(task: F) -> Self {
         Self::new(task, [])
+    }
+    pub(crate) fn into_task(self) -> UnitTask<'a, T, E> {
+        self.task
     }
 }
