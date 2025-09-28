@@ -1,4 +1,6 @@
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+use derive_more::Display;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Display)]
 pub struct TaskId(u128);
 
 impl TaskId {

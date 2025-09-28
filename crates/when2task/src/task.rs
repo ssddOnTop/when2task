@@ -1,5 +1,6 @@
-use crate::TaskId;
+use crate::{Dependency, TaskId};
 use derive_getters::Getters;
+use std::future::Future;
 use std::pin::Pin;
 
 pub type UnitTask<'a, T, E> = Pin<Box<dyn Future<Output = Result<T, E>> + 'a>>;
@@ -9,21 +10,25 @@ pub struct Task<'a, T, E> {
     id: TaskId,
     #[getter(skip)]
     task: UnitTask<'a, T, E>,
-    dependencies: Vec<TaskId>,
+    dependencies: Dependency,
 }
 
 impl<'a, T, E> Task<'a, T, E> {
-    pub fn new<F: Future<Output = Result<T, E>> + 'a, D: IntoIterator<Item = TaskId>>(
+    pub fn new<F: Future<Output = Result<T, E>> + 'a>(
         task: F,
-        dependencies: D,
+        dependencies: impl Into<Dependency>,
     ) -> Self {
         let id = TaskId::generate();
-        let dependencies = dependencies.into_iter().collect::<Vec<_>>();
 
         Self {
             id,
             task: Box::pin(task),
-            dependencies,
+            dependencies: dependencies.into(),
         }
+    }
+
+    /// Convenience method to create a task with no dependencies
+    pub fn new_independent<F: Future<Output = Result<T, E>> + 'a>(task: F) -> Self {
+        Self::new(task, [])
     }
 }

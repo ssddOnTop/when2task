@@ -1,8 +1,18 @@
-use crate::{Task, TaskId};
+use crate::{ExecutionError, Task, TaskId};
 use std::collections::HashMap;
+use crate::blueprint::Blueprint;
 
 pub enum ExecutionMode {
-    Async,
+    /// Everything function is executed truly asynchronously
+    /// For example, if a step has tasks A, B and C, we execute
+    /// each of them asynchronously.
+    TrueAsync,
+
+    /// All the individual tasks in a step are executed in parallel,
+    /// but we wait for all the tasks in the same step to complete.
+    /// For example, if a step has tasks A, B and C, we execute
+    /// the tasks in parallel and wait for all of them.
+    PseudoAsync,
     // Parallel,
 }
 
@@ -23,7 +33,8 @@ impl<'a, T, E> TaskExecutor<'a, T, E> {
         self
     }
 
-    pub async fn execute() {
+    pub async fn execute(self) -> Result<(), ExecutionError> {
+        let _blueprint = Blueprint::from_tasks(&self.tasks)?;
         todo!()
     }
 }
