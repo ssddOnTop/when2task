@@ -1,5 +1,8 @@
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+use derive_more::Display;
+
+#[derive(Display, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct TaskId(u128);
+
 
 impl TaskId {
     pub fn generate() -> Self {
