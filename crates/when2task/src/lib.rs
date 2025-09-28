@@ -1,10 +1,10 @@
+mod blueprint;
 mod dependency;
 mod errors;
-mod id;
-mod task;
-mod blueprint;
-mod result;
 mod exec;
+mod id;
+mod result;
+mod task;
 
 pub use dependency::*;
 pub use errors::*;

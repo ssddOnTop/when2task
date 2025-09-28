@@ -40,7 +40,7 @@ impl Blueprint {
                     .push(*task_id);
                 *in_degree.get_mut(task_id).ok_or_else(|| {
                     BlueprintError::InternalError(format!(
-                        "Task {} not found in_degree map during dependency calculation", 
+                        "Task {} not found in_degree map during dependency calculation",
                         task_id
                     ))
                 })? += 1;

@@ -28,7 +28,9 @@ impl<T, E> ExecutionMode<T, E> {
     /// For example, if a step has tasks A, B and C, we execute
     /// the tasks in parallel and wait for all of them.
     pub fn pseudo_async<
-        F: Fn(Pin<Box<dyn Future<Output = Result<T, E>> + Send + 'static>>) -> JoinHandle<Result<T, E>>
+        F: Fn(
+                Pin<Box<dyn Future<Output = Result<T, E>> + Send + 'static>>,
+            ) -> JoinHandle<Result<T, E>>
             + Send
             + 'static,
     >(
