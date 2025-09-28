@@ -86,3 +86,151 @@ impl<T, E> TaskExecutor<'static, T, E> {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{Dependency, Task};
+    use std::future;
+
+    #[test]
+    fn test_new_executor() {
+        let executor = TaskExecutor::<(), ()>::new(ExecutionMode::true_async());
+        assert!(executor.tasks.is_empty());
+        assert!(executor.task_ids().is_empty());
+    }
+
+    #[test]
+    fn test_insert_task() {
+        let task = Task::new_independent(future::ready(Ok::<(), ()>(())));
+        let task_id = *task.id();
+        let executor = TaskExecutor::new(ExecutionMode::true_async()).insert(task);
+
+        assert_eq!(executor.tasks.len(), 1);
+        let ids = executor.task_ids();
+        assert_eq!(ids.len(), 1);
+        assert_eq!(ids[0], task_id);
+    }
+
+    #[test]
+    fn test_multiple_task_insertion() {
+        let task1 = Task::new_independent(future::ready(Ok::<(), ()>(())));
+        let task2 = Task::new_independent(future::ready(Ok::<(), ()>(())));
+        let id1 = *task1.id();
+        let id2 = *task2.id();
+
+        let executor = TaskExecutor::new(ExecutionMode::true_async())
+            .insert(task1)
+            .insert(task2);
+
+        assert_eq!(executor.tasks.len(), 2);
+        let mut ids = executor.task_ids();
+        ids.sort();
+        let mut expected = vec![id1, id2];
+        expected.sort();
+        assert_eq!(ids, expected);
+    }
+
+    #[tokio::test]
+    async fn test_execute_single_successful_task() {
+        let task = Task::new_independent(future::ready(Ok::<i32, ()>(42)));
+        let executor = TaskExecutor::new(ExecutionMode::true_async()).insert(task);
+
+        let result = executor.execute().await.unwrap();
+
+        assert_eq!(result.total_tasks, 1);
+        assert_eq!(result.successful_tasks, 1);
+        assert_eq!(result.failed_tasks, 0);
+        assert_eq!(result.steps.len(), 1);
+        assert_eq!(result.steps[0].len(), 1);
+        assert!(result.steps[0][0].result.is_ok());
+        assert_eq!(result.steps[0][0].result.as_ref().unwrap(), &42);
+        assert!(result.all_successful());
+    }
+
+    #[tokio::test]
+    async fn test_execute_single_failed_task() {
+        let task = Task::new_independent(future::ready(Err::<i32, &str>("error")));
+        let executor = TaskExecutor::new(ExecutionMode::true_async()).insert(task);
+
+        let result = executor.execute().await.unwrap();
+
+        assert_eq!(result.total_tasks, 1);
+        assert_eq!(result.successful_tasks, 0);
+        assert_eq!(result.failed_tasks, 1);
+        assert_eq!(result.steps.len(), 1);
+        assert_eq!(result.steps[0].len(), 1);
+        assert!(result.steps[0][0].result.is_err());
+        assert_eq!(result.steps[0][0].result.as_ref().unwrap_err(), &"error");
+        assert!(!result.all_successful());
+    }
+
+    #[tokio::test]
+    async fn test_execute_multiple_independent_tasks() {
+        let task1 = Task::new_independent(future::ready(Ok::<i32, &str>(1)));
+        let task2 = Task::new_independent(future::ready(Ok::<i32, &str>(2)));
+        let task3 = Task::new_independent(future::ready(Err::<i32, &str>("fail")));
+
+        let executor = TaskExecutor::new(ExecutionMode::true_async())
+            .insert(task1)
+            .insert(task2)
+            .insert(task3);
+
+        let result = executor.execute().await.unwrap();
+
+        assert_eq!(result.total_tasks, 3);
+        assert_eq!(result.successful_tasks, 2);
+        assert_eq!(result.failed_tasks, 1);
+        assert_eq!(result.steps.len(), 1); // All independent, so one step
+        assert_eq!(result.steps[0].len(), 3);
+    }
+
+    #[tokio::test]
+    async fn test_execute_dependent_tasks() {
+        let task1 = Task::new_independent(future::ready(Ok::<i32, ()>(1)));
+        let task1_id = *task1.id();
+        let task2 = Task::new(
+            future::ready(Ok::<i32, ()>(2)),
+            Dependency::from([task1_id]),
+        );
+
+        let executor = TaskExecutor::new(ExecutionMode::true_async())
+            .insert(task1)
+            .insert(task2);
+
+        let result = executor.execute().await.unwrap();
+
+        assert_eq!(result.total_tasks, 2);
+        assert_eq!(result.successful_tasks, 2);
+        assert_eq!(result.failed_tasks, 0);
+        assert_eq!(result.steps.len(), 2); // Two steps due to dependency
+        assert_eq!(result.steps[0].len(), 1); // First step has task1
+        assert_eq!(result.steps[1].len(), 1); // Second step has task2
+    }
+
+    #[tokio::test]
+    async fn test_execute_empty_executor() {
+        let executor = TaskExecutor::<i32, &str>::new(ExecutionMode::true_async());
+
+        let result = executor.execute().await.unwrap();
+
+        assert_eq!(result.total_tasks, 0);
+        assert_eq!(result.successful_tasks, 0);
+        assert_eq!(result.failed_tasks, 0);
+        assert!(result.steps.is_empty());
+        assert!(result.all_successful());
+    }
+
+    #[tokio::test]
+    async fn test_execute_with_pseudo_async_mode() {
+        let task = Task::new_independent(future::ready(Ok::<i32, ()>(100)));
+        let executor = TaskExecutor::new(ExecutionMode::pseudo_async(tokio::spawn)).insert(task);
+
+        let result = executor.execute().await.unwrap();
+
+        assert_eq!(result.total_tasks, 1);
+        assert_eq!(result.successful_tasks, 1);
+        assert_eq!(result.failed_tasks, 0);
+        assert_eq!(result.steps[0][0].result.as_ref().unwrap(), &100);
+    }
+}

@@ -310,9 +310,9 @@ dependencies = [
 
 [[package]]
 name = "gh-workflow-tailcall"
-version = "0.2.1"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8c214a88523a29d2392ae41aba6a88e5cecb984e30ea3c6067be9e873af86207"
+checksum = "d60e98c430ebff00d51b8bfd13357bf551ee75d916e9f52f1a8b9ca3fdd4b29f"
 dependencies = [
  "derive_setters",
  "gh-workflow",
@@ -679,6 +679,18 @@ dependencies = [
  "mio",
  "pin-project-lite",
  "slab",
+ "tokio-macros",
+]
+
+[[package]]
+name = "tokio-macros"
+version = "2.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6e06d43f1345a3bcd39f6a56dbb7dcab2ba47e68e8ac134855e7e2bdbaf8cab8"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.106",
 ]
 
 [[package]]

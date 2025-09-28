@@ -4,4 +4,4 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-gh-workflow-tailcall = "0.2.1"
+gh-workflow-tailcall = "0.3.0"

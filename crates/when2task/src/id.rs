@@ -1,6 +1,6 @@
 use derive_more::Display;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Display)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Display, PartialOrd, Ord)]
 pub struct TaskId(u128);
 
 impl TaskId {
