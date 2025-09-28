@@ -28,7 +28,7 @@ impl<'a, T, E> TaskExecutor<'a, T, E> {
     }
 }
 
-impl<T: 'static, E: 'static> TaskExecutor<'static, T, E> {
+impl<T, E> TaskExecutor<'static, T, E> {
     pub async fn execute(mut self) -> Result<ExecutionResult<T, E>, ExecutionError> {
         let blueprint = Blueprint::from_tasks(&self.tasks)?;
 
