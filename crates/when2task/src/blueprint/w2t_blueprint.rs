@@ -33,10 +33,7 @@ impl Blueprint {
         // Calculate in-degrees and build adjacency list
         for (task_id, task) in tasks {
             for dep_id in task.dependencies().into_iter() {
-                adjacency_list
-                    .entry(dep_id)
-                    .or_insert_with(Vec::new)
-                    .push(*task_id);
+                adjacency_list.entry(dep_id).or_default().push(*task_id);
                 *in_degree.get_mut(task_id).ok_or_else(|| {
                     BlueprintError::InternalError(format!(
                         "Task {} not found in_degree map during dependency calculation",

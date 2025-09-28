@@ -6,6 +6,8 @@ use std::collections::HashMap;
 use std::pin::Pin;
 use tokio::task::JoinError;
 
+type StepHandle<T, E> = Pin<Box<dyn Future<Output = Result<TaskResult<T, E>, JoinError>>>>;
+
 pub struct TaskExecutor<'a, T, E> {
     tasks: HashMap<TaskId, Task<'a, T, E>>,
     mode: ExecutionMode<T, E>,
@@ -28,7 +30,7 @@ impl<'a, T, E> TaskExecutor<'a, T, E> {
     }
 }
 
-impl<T, E> TaskExecutor<'static, T, E> {
+impl<T: 'static, E: 'static> TaskExecutor<'static, T, E> {
     pub async fn execute(mut self) -> Result<ExecutionResult<T, E>, ExecutionError> {
         let blueprint = Blueprint::from_tasks(&self.tasks)?;
 
@@ -40,9 +42,7 @@ impl<T, E> TaskExecutor<'static, T, E> {
         // Execute tasks step by step
         for step_index in 0..blueprint.step_count() {
             let task_ids = blueprint.tasks_at_step(step_index).unwrap();
-            let mut step_handles: Vec<
-                Pin<Box<dyn Future<Output = Result<TaskResult<T, E>, JoinError>>>>,
-            > = vec![];
+            let mut step_handles: Vec<StepHandle<T, E>> = vec![];
 
             // Spawn all tasks in this step concurrently
             for task_id in task_ids {

@@ -66,9 +66,9 @@ pub struct DependencyIter<'a> {
 
 impl<'a> DependencyIter<'a> {
     fn new(dependency: &'a Dependency) -> Self {
-        let mut stack = Vec::new();
-        stack.push(dependency);
-        Self { stack }
+        Self {
+            stack: vec![dependency],
+        }
     }
 }
 
