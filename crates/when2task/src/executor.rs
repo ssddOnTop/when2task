@@ -128,25 +128,7 @@ where
         })
     }
 
-    /// Execute tasks and return only the successful results in a flat vector
-    pub async fn execute_and_collect_results(self) -> Result<Vec<T>, ExecutionError> {
-        let execution_result = self.execute().await?;
-        let _results: Vec<T> = execution_result
-            .successful_results()
-            .filter_map(|task_result| {
-                if let Ok(ref _value) = task_result.result {
-                    // Note: This clones the value. For non-Clone types, you'd need a different approach
-                    None::<T> // We can't extract T without Clone trait
-                } else {
-                    None
-                }
-            })
-            .collect();
 
-        // For now, return empty vector since we can't extract T without Clone
-        // This method would need to be redesigned based on specific use case
-        Ok(vec![])
-    }
 
     /// Get a reference to the tasks map
     pub fn tasks(&self) -> &HashMap<TaskId, Task<'static, T, E>> {

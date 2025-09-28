@@ -583,6 +583,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "when2task-tests"
+version = "0.1.0"
+dependencies = [
+ "tokio",
+ "when2task",
+]
+
+[[package]]
 name = "windows-link"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
