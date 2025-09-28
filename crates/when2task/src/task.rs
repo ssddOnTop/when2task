@@ -1,6 +1,6 @@
 use crate::TaskId;
-use std::pin::Pin;
 use derive_getters::Getters;
+use std::pin::Pin;
 
 pub type UnitTask<'a, T, E> = Pin<Box<dyn Future<Output = Result<T, E>> + 'a>>;
 
@@ -13,13 +13,16 @@ pub struct Task<'a, T, E> {
 }
 
 impl<'a, T, E> Task<'a, T, E> {
-    pub fn new<D: IntoIterator<Item = TaskId>>(task: UnitTask<'a, T, E>, dependencies: D) -> Self {
+    pub fn new<F: Future<Output = Result<T, E>> + 'a, D: IntoIterator<Item = TaskId>>(
+        task: F,
+        dependencies: D,
+    ) -> Self {
         let id = TaskId::generate();
         let dependencies = dependencies.into_iter().collect::<Vec<_>>();
 
         Self {
             id,
-            task,
+            task: Box::pin(task),
             dependencies,
         }
     }
