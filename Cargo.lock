@@ -820,7 +820,7 @@ dependencies = [
 
 [[package]]
 name = "when2task"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "derive-getters",
  "derive_more 2.0.1",
