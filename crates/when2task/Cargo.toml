@@ -1,6 +1,6 @@
 [package]
 name = "when2task"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 description = "high-performance library for executing async tasks with automatic dependency resolution and optimal parallelization."
 authors = ["Sandipsinh Rathod <sandip@ssdd.dev>"]
