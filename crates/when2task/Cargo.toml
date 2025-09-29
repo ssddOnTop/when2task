@@ -5,7 +5,7 @@ edition = "2024"
 description = "high-performance library for executing async tasks with automatic dependency resolution and optimal parallelization."
 authors = ["Sandipsinh Rathod <sandip@ssdd.dev>"]
 license = "MIT"
-readme = "../../README.md"
+readme = "README.md"
 
 [dependencies]
 uuid = { version = "1.18.1", features = ["v4"] }
@@ -13,4 +13,4 @@ derive-getters = "0.5.0"
 thiserror = "2.0.16"
 derive_more = { version = "2.0.1", features = ["display"], default-features = false }
 futures = "0.3.31"
-tokio = { version = "1.47.1", features = ["rt-multi-thread", "macros"], default-features = false }
+tokio = { version = "1.47.1", features = ["rt-multi-thread", "macros", "time"], default-features = false }
