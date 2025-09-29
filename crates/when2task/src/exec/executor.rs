@@ -8,19 +8,19 @@ use tokio::task::JoinError;
 
 type StepHandle<T, E> = Pin<Box<dyn Future<Output = Result<TaskResult<T, E>, JoinError>>>>;
 
-pub struct TaskExecutor<'a, T, E> {
-    tasks: HashMap<TaskId, Task<'a, T, E>>,
+pub struct TaskExecutor<T, E> {
+    tasks: HashMap<TaskId, Task<'static, T, E>>,
     mode: ExecutionMode<T, E>,
 }
 
-impl<'a, T, E> TaskExecutor<'a, T, E> {
+impl<T: 'static, E: 'static> TaskExecutor<T, E> {
     pub fn new(execution_mode: ExecutionMode<T, E>) -> Self {
         Self {
             tasks: Default::default(),
             mode: execution_mode,
         }
     }
-    pub fn insert(mut self, task: Task<'a, T, E>) -> Self {
+    pub fn insert(mut self, task: Task<'static, T, E>) -> Self {
         self.tasks.insert(*task.id(), task);
         self
     }
@@ -28,9 +28,7 @@ impl<'a, T, E> TaskExecutor<'a, T, E> {
     pub fn task_ids(&self) -> Vec<TaskId> {
         self.tasks.keys().cloned().collect()
     }
-}
 
-impl<T: 'static, E: 'static> TaskExecutor<'static, T, E> {
     pub async fn execute(mut self) -> Result<ExecutionResult<T, E>, ExecutionError> {
         let blueprint = Blueprint::from_tasks(&self.tasks)?;
 
