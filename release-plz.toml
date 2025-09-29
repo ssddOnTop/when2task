@@ -4,4 +4,4 @@ publish = true
 
 [[package]]
 name = "w2t_publish"
-publish = false
+release = false
