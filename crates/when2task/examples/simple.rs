@@ -31,10 +31,9 @@ async fn main() {
         Dependency::from([task_a_id, task_b_id]),
     );
 
-    let executor = TaskExecutor::new(ExecutionMode::true_async())
-        .insert(task_a)
-        .insert(task_b)
-        .insert(task_c);
+    let executor = TaskExecutor::new(ExecutionMode::true_async());
+
+    executor.insert(task_a).insert(task_b).insert(task_c);
 
     let result = executor.execute().await.unwrap();
 

@@ -1,15 +1,15 @@
 use crate::blueprint::Blueprint;
 use crate::result::{ExecutionResult, TaskResult};
 use crate::{ExecutionError, ExecutionMode, Task, TaskId};
+use dashmap::DashMap;
 use futures::FutureExt;
-use std::collections::HashMap;
 use std::pin::Pin;
 use tokio::task::JoinError;
 
 type StepHandle<T, E> = Pin<Box<dyn Future<Output = Result<TaskResult<T, E>, JoinError>>>>;
 
 pub struct TaskExecutor<T, E> {
-    tasks: HashMap<TaskId, Task<'static, T, E>>,
+    tasks: DashMap<TaskId, Task<'static, T, E>>,
     mode: ExecutionMode<T, E>,
 }
 
@@ -20,16 +20,16 @@ impl<T: 'static, E: 'static> TaskExecutor<T, E> {
             mode: execution_mode,
         }
     }
-    pub fn insert(mut self, task: Task<'static, T, E>) -> Self {
+    pub fn insert(&self, task: Task<'static, T, E>) -> &Self {
         self.tasks.insert(*task.id(), task);
         self
     }
 
     pub fn task_ids(&self) -> Vec<TaskId> {
-        self.tasks.keys().cloned().collect()
+        self.tasks.iter().map(|v| v.key().clone()).collect()
     }
 
-    pub async fn execute(mut self) -> Result<ExecutionResult<T, E>, ExecutionError> {
+    pub async fn execute(&self) -> Result<ExecutionResult<T, E>, ExecutionError> {
         let blueprint = Blueprint::from_tasks(&self.tasks)?;
 
         let mut execution_steps = vec![];
@@ -45,7 +45,7 @@ impl<T: 'static, E: 'static> TaskExecutor<T, E> {
             // Spawn all tasks in this step concurrently
             for task_id in task_ids {
                 let task_id = *task_id;
-                if let Some(task) = self.tasks.remove(&task_id) {
+                if let Some((_, task)) = self.tasks.remove(&task_id) {
                     if let Some(spawn) = self.mode.execution_fn.as_ref() {
                         let handle = spawn(task.into_task())
                             .map(move |r| r.map(|result| TaskResult { task_id, result }));
@@ -102,7 +102,8 @@ mod tests {
     fn test_insert_task() {
         let task = Task::new_independent(future::ready(Ok::<(), ()>(())));
         let task_id = *task.id();
-        let executor = TaskExecutor::new(ExecutionMode::true_async()).insert(task);
+        let executor = TaskExecutor::new(ExecutionMode::true_async());
+        executor.insert(task);
 
         assert_eq!(executor.tasks.len(), 1);
         let ids = executor.task_ids();
@@ -117,9 +118,8 @@ mod tests {
         let id1 = *task1.id();
         let id2 = *task2.id();
 
-        let executor = TaskExecutor::new(ExecutionMode::true_async())
-            .insert(task1)
-            .insert(task2);
+        let executor = TaskExecutor::new(ExecutionMode::true_async());
+        executor.insert(task1).insert(task2);
 
         assert_eq!(executor.tasks.len(), 2);
         let mut ids = executor.task_ids();
@@ -132,7 +132,8 @@ mod tests {
     #[tokio::test]
     async fn test_execute_single_successful_task() {
         let task = Task::new_independent(future::ready(Ok::<i32, ()>(42)));
-        let executor = TaskExecutor::new(ExecutionMode::true_async()).insert(task);
+        let executor = TaskExecutor::new(ExecutionMode::true_async());
+        executor.insert(task);
 
         let result = executor.execute().await.unwrap();
 
@@ -149,7 +150,8 @@ mod tests {
     #[tokio::test]
     async fn test_execute_single_failed_task() {
         let task = Task::new_independent(future::ready(Err::<i32, &str>("error")));
-        let executor = TaskExecutor::new(ExecutionMode::true_async()).insert(task);
+        let executor = TaskExecutor::new(ExecutionMode::true_async());
+        executor.insert(task);
 
         let result = executor.execute().await.unwrap();
 
@@ -169,10 +171,8 @@ mod tests {
         let task2 = Task::new_independent(future::ready(Ok::<i32, &str>(2)));
         let task3 = Task::new_independent(future::ready(Err::<i32, &str>("fail")));
 
-        let executor = TaskExecutor::new(ExecutionMode::true_async())
-            .insert(task1)
-            .insert(task2)
-            .insert(task3);
+        let executor = TaskExecutor::new(ExecutionMode::true_async());
+        executor.insert(task1).insert(task2).insert(task3);
 
         let result = executor.execute().await.unwrap();
 
@@ -192,9 +192,8 @@ mod tests {
             Dependency::from([task1_id]),
         );
 
-        let executor = TaskExecutor::new(ExecutionMode::true_async())
-            .insert(task1)
-            .insert(task2);
+        let executor = TaskExecutor::new(ExecutionMode::true_async());
+        executor.insert(task1).insert(task2);
 
         let result = executor.execute().await.unwrap();
 
@@ -222,7 +221,8 @@ mod tests {
     #[tokio::test]
     async fn test_execute_with_pseudo_async_mode() {
         let task = Task::new_independent(future::ready(Ok::<i32, ()>(100)));
-        let executor = TaskExecutor::new(ExecutionMode::pseudo_async(tokio::spawn)).insert(task);
+        let executor = TaskExecutor::new(ExecutionMode::pseudo_async(tokio::spawn));
+        executor.insert(task);
 
         let result = executor.execute().await.unwrap();
 

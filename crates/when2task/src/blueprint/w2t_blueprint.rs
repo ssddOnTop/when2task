@@ -1,5 +1,6 @@
 use crate::blueprint::BlueprintError;
 use crate::{Task, TaskId};
+use dashmap::DashMap;
 use std::collections::{HashMap, HashSet};
 
 #[derive(Debug)]
@@ -11,9 +12,11 @@ pub struct Blueprint {
 }
 
 impl Blueprint {
-    pub fn from_tasks<T, E>(tasks: &HashMap<TaskId, Task<T, E>>) -> Result<Self, BlueprintError> {
+    pub fn from_tasks<T, E>(tasks: &DashMap<TaskId, Task<T, E>>) -> Result<Self, BlueprintError> {
         // Validate that all dependencies exist
-        for (task_id, task) in tasks {
+        for v in tasks.iter() {
+            let task_id = v.key();
+            let task = v.value();
             for dep_id in task.dependencies().into_iter() {
                 if !tasks.contains_key(&dep_id) {
                     return Err(BlueprintError::MissingDependency(*task_id, dep_id));
@@ -26,12 +29,14 @@ impl Blueprint {
         let mut adjacency_list: HashMap<TaskId, Vec<TaskId>> = HashMap::new();
 
         // Initialize in-degrees for all tasks
-        for task_id in tasks.keys() {
-            in_degree.insert(*task_id, 0);
+        for task_id in tasks.iter() {
+            in_degree.insert(*task_id.key(), 0);
         }
 
         // Calculate in-degrees and build adjacency list
-        for (task_id, task) in tasks {
+        for v in tasks {
+            let task_id = v.key();
+            let task = v.value();
             for dep_id in task.dependencies().into_iter() {
                 adjacency_list.entry(dep_id).or_default().push(*task_id);
                 *in_degree.get_mut(task_id).ok_or_else(|| {
@@ -86,9 +91,9 @@ impl Blueprint {
         // Check for circular dependencies
         if processed.len() != tasks.len() {
             let remaining: Vec<TaskId> = tasks
-                .keys()
+                .iter()
+                .map(|task_id| *task_id.key())
                 .filter(|id| !processed.contains(id))
-                .cloned()
                 .collect();
             return Err(BlueprintError::CircularDependency(remaining));
         }
@@ -118,7 +123,7 @@ mod tests {
 
     #[test]
     fn test_simple_blueprint() {
-        let mut tasks = HashMap::new();
+        let tasks = DashMap::new();
         let task1 = create_dummy_task();
         let task2 = create_dummy_task();
 
@@ -135,7 +140,7 @@ mod tests {
 
     #[test]
     fn test_sequential_blueprint() {
-        let mut tasks = HashMap::new();
+        let tasks = DashMap::new();
         let task1 = create_dummy_task();
         let id1 = *task1.id();
 
