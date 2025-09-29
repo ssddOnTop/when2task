@@ -41,8 +41,7 @@ impl Blueprint {
                 adjacency_list.entry(dep_id).or_default().push(*task_id);
                 *in_degree.get_mut(task_id).ok_or_else(|| {
                     BlueprintError::InternalError(format!(
-                        "Task {} not found in_degree map during dependency calculation",
-                        task_id
+                        "Task {task_id} not found in_degree map during dependency calculation"
                     ))
                 })? += 1;
             }

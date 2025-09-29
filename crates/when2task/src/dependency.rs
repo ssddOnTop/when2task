@@ -350,7 +350,7 @@ mod tests {
 
         // Test Debug trait
         let dep = Dependency::Task(task1);
-        let debug_str = format!("{:?}", dep);
+        let debug_str = format!("{dep:?}");
         assert!(debug_str.contains("Task"));
 
         // Test complex chained dependency scenarios

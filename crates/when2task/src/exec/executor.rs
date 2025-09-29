@@ -26,7 +26,7 @@ impl<T: 'static, E: 'static> TaskExecutor<T, E> {
     }
 
     pub fn task_ids(&self) -> Vec<TaskId> {
-        self.tasks.iter().map(|v| v.key().clone()).collect()
+        self.tasks.iter().map(|v| *v.key()).collect()
     }
 
     pub async fn execute(&self) -> Result<ExecutionResult<T, E>, ExecutionError> {
