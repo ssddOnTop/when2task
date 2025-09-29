@@ -1,5 +1,5 @@
 use std::time::{Duration, Instant};
-use when2task::{Dependency, ExecutionMode, Task, TaskExecutor};
+use when2task::{Dependency, ExecutionMode, Task, TaskExecutorBuilder};
 
 #[tokio::main]
 async fn main() {
@@ -31,9 +31,10 @@ async fn main() {
         Dependency::from([task_a_id, task_b_id]),
     );
 
-    let executor = TaskExecutor::new(ExecutionMode::true_async());
+    let builder = TaskExecutorBuilder::new(ExecutionMode::true_async());
+    builder.insert(task_a).insert(task_b).insert(task_c);
 
-    executor.insert(task_a).insert(task_b).insert(task_c);
+    let executor = builder.build().unwrap();
 
     let result = executor.execute().await.unwrap();
 
