@@ -6,11 +6,11 @@ execution plan.
 
 # Plans
 
-[] Create async task executor with ability to plan execute tasks asynchronously or execute tasks in parallel and threat
+- [x] Create async task executor with ability to plan execute tasks asynchronously or execute tasks in parallel and threat
 the task group as async.
 
-[] Create truly parallel task executor
+- [] Create truly parallel task executor
 
-[] Ability to pass outputs as inputs to dependent tasks
+- ~~[] Ability to pass outputs as inputs to dependent tasks~~
 
-[] Ability to return a map of Task ID and task results after execution.
+- [x] Ability to return a map of Task ID and task results after execution.
