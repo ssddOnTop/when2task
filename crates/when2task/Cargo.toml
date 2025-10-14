@@ -6,6 +6,7 @@ description = "high-performance library for executing async tasks with automatic
 authors = ["Sandipsinh Rathod <sandip@ssdd.dev>"]
 license = "MIT"
 readme = "README.md"
+repository = "https://github.com/ssddOnTop/when2task"
 
 [dependencies]
 uuid = { version = "1.18.1", features = ["v4"] }
